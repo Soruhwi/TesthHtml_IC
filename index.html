@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단가 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 0;
+            margin: 0;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .nav-bar a {
+            color: white;
+            margin-left: 15px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .nav-bar a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 60%;
+            margin: 80px auto 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .recipe-name-container {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .recipe-name-container input[type="text"] {
+            display: none;
+        }
+        .edit-icons {
+            display: inline;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .ingredient {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .ingredient label {
+            margin-right: 2px;
+            min-width: 80px;
+        }
+        .ingredient input {
+            margin-right: 30px;
+        }
+        .ingredient input[type="number"] {
+            width: 80px;
+        }
+        .ingredient .cost-per-gram {
+            margin-left: 10px;
+            min-width: 100px;
+        }
+        .ingredient .remove-ingredient {
+            background-color: #ff6b6b;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        #add-ingredient {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        #save-recipe {
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-left: 20px;
+        }
+        #total-cost {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #333;
+        }
+        .cost-summary {
+            display: block;
+        }
+        .cost-summary-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            flex-direction: column;
+        }
+        .saved-recipes {
+            margin-top: 30px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .saved-recipe {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .saved-recipe .recipe-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            flex: 1;
+            color: #333;
+        }
+        .saved-recipe .cost-info {
+            color: #666;
+            flex: 1;
+            text-align: right;
+            font-size: 0.9em;
+        }
+        .delete-recipe {
+            background-color: #ff6b6b;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .login-box {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 2000;
+        }
+        .login-box input {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .login-box button:hover {
+            background-color: #45a049;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1500;
+        }
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 80%;
+                margin-top: 100px;
+            }
+            .ingredient {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .ingredient input[type="number"], .ingredient input[type="text"] {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .ingredient .remove-ingredient {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                max-width: 90%;
+                margin-top: 120px;
+            }
+            .ingredient label, .ingredient input, .ingredient .cost-per-gram {
+                min-width: 100%;
+            }
+        }
+        @media (max-width: 480px) {
+            .container {
+                max-width: 95%;
+                margin-top: 140px;
+            }
+            .nav-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .nav-bar a {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="#login" onclick="openLoginBox()">로그인</a>
+        <a href="#mypage">Mypage</a>
+    </div>
+    <div class="container">
+        <h1>단가 계산기</h1>
+        <div class="recipe-name-container">
+            <span id="recipe-name-display">(레시피 명을 입력해 주세요)</span>
+            <input type="text" id="recipe-name-input" placeholder="레시피 명 입력">
+            <span class="edit-icons">
+                <span id="edit-recipe-name" onclick="editRecipeName()">✏️</span>
+                <span id="save-recipe-name" style="display: none;" onclick="saveRecipeName()">✔️</span>
+                <span id="cancel-recipe-name" style="display: none;" onclick="cancelEditRecipeName()">❌</span>
+            </span>
+        </div>
+        <div id="ingredients-container">
+            <div class="ingredient" id="ingredient-0">
+                <label for="ingredient-name-0">재료 이름 :</label>
+                <input type="text" id="ingredient-name-0">
+                <label for="ingredient-weight-0">중량(g) :</label>
+                <input type="number" id="ingredient-weight-0" oninput="calculateCostPerGram(0)">
+                <label for="ingredient-cost-0">금액(원) :</label>
+                <input type="number" id="ingredient-cost-0" oninput="calculateCostPerGram(0)">
+                <span class="cost-per-gram" id="cost-per-gram-0">g당 금액 : 0원</span>
+                <button class="remove-ingredient" onclick="removeIngredient(0)">재료 빼기</button>
+            </div>
+            <div class="ingredient" id="ingredient-1">
+                <label for="ingredient-name-1">재료 이름 :</label>
+                <input type="text" id="ingredient-name-1">
+                <label for="ingredient-weight-1">중량(g) :</label>
+                <input type="number" id="ingredient-weight-1" oninput="calculateCostPerGram(1)">
+                <label for="ingredient-cost-1">금액(원) :</label>
+                <input type="number" id="ingredient-cost-1" oninput="calculateCostPerGram(1)">
+                <span class="cost-per-gram" id="cost-per-gram-1">g당 금액 : 0원</span>
+                <button class="remove-ingredient" onclick="removeIngredient(1)">재료 빼기</button>
+            </div>
+            <div class="ingredient" id="ingredient-2">
+                <label for="ingredient-name-2">재료 이름 :</label>
+                <input type="text" id="ingredient-name-2">
+                <label for="ingredient-weight-2">중량(g) :</label>
+                <input type="number" id="ingredient-weight-2" oninput="calculateCostPerGram(2)">
+                <label for="ingredient-cost-2">금액(원) :</label>
+                <input type="number" id="ingredient-cost-2" oninput="calculateCostPerGram(2)">
+                <span class="cost-per-gram" id="cost-per-gram-2">g당 금액 : 0원</span>
+                <button class="remove-ingredient" onclick="removeIngredient(2)">재료 빼기</button>
+            </div>
+        </div>
+        <button id="add-ingredient">재료 추가</button>
+        <button id="save-recipe">레시피 저장</button>
+        <div id="total-cost">
+            <div class="cost-summary-container">
+                <span>전체 중량 : 0g당 단가 : 0원</span>
+                <span class="cost-summary">100g당 단가: 0원</span>
+            </div>
+        </div>
+        <div class="saved-recipes">
+            <h2>저장된 레시피</h2>
+            <div id="saved-recipes-container"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeLoginBox()"></div>
+
+    <div class="login-box" id="login-box">
+        <h2>로그인</h2>
+        <input type="text" placeholder="ID" id="login-id">
+        <input type="password" placeholder="PW" id="login-pw">
+        <button onclick="login()">로그인</button>
+    </div>
+
+    <script>
+        let ingredientIndex = 3;
+        const savedRecipes = [];
+
+        function calculateCostPerGram(index) {
+            const weight = parseFloat(document.getElementById(`ingredient-weight-${index}`).value) || 0;
+            const cost = parseFloat(document.getElementById(`ingredient-cost-${index}`).value) || 0;
+            const costPerGram = (weight && cost) ? (cost / weight).toFixed(2) : 0;
+            document.getElementById(`cost-per-gram-${index}`).textContent = `g당 금액 : ${costPerGram}원`;
+            calculateTotalCostPerGram();
+        }
+
+        function calculateTotalCostPerGram() {
+            let totalWeight = 0;
+            let totalCost = 0;
+
+            for (let i = 0; i < ingredientIndex; i++) {
+                const ingredient = document.getElementById(`ingredient-${i}`);
+                if (ingredient) {
+                    const weight = parseFloat(document.getElementById(`ingredient-weight-${i}`).value) || 0;
+                    const cost = parseFloat(document.getElementById(`ingredient-cost-${i}`).value) || 0;
+                    totalWeight += weight;
+                    totalCost += cost;
+                }
+            }
+
+            const totalCostPerGram = (totalWeight && totalCost) ? (totalCost / totalWeight).toFixed(2) : 0;
+            const costPer100Gram = (totalCostPerGram * 100).toFixed(2);
+            document.getElementById('total-cost').innerHTML = `
+                <div class="cost-summary-container">
+                    <span>전체 중량 : ${totalWeight}g당 단가 : ${totalCostPerGram}원</span>
+                    <span class="cost-summary">100g당 단가: ${costPer100Gram}원</span>
+                </div>
+            `;
+            return { totalCostPerGram, costPer100Gram };
+        }
+
+        function removeIngredient(index) {
+            const ingredient = document.getElementById(`ingredient-${index}`);
+            if (ingredient) {
+                ingredient.remove();
+                calculateTotalCostPerGram();
+            }
+        }
+
+        function editRecipeName() {
+            document.getElementById('recipe-name-display').style.display = 'none';
+            document.getElementById('recipe-name-input').style.display = 'inline';
+            document.getElementById('edit-recipe-name').style.display = 'none';
+            document.getElementById('save-recipe-name').style.display = 'inline';
+            document.getElementById('cancel-recipe-name').style.display = 'inline';
+        }
+
+        function saveRecipeName() {
+            const display = document.getElementById('recipe-name-display');
+            const input = document.getElementById('recipe-name-input');
+            display.textContent = input.value || '(레시피 명을 입력해 주세요)';
+            display.style.display = 'inline';
+            input.style.display = 'none';
+            document.getElementById('edit-recipe-name').style.display = 'inline';
+            document.getElementById('save-recipe-name').style.display = 'none';
+            document.getElementById('cancel-recipe-name').style.display = 'none';
+        }
+
+        function cancelEditRecipeName() {
+            const display = document.getElementById('recipe-name-display');
+            const input = document.getElementById('recipe-name-input');
+            input.value = display.textContent;
+            display.style.display = 'inline';
+            input.style.display = 'none';
+            document.getElementById('edit-recipe-name').style.display = 'inline';
+            document.getElementById('save-recipe-name').style.display = 'none';
+            document.getElementById('cancel-recipe-name').style.display = 'none';
+        }
+
+        function saveRecipe() {
+            const recipeName = document.getElementById('recipe-name-display').textContent;
+            if (!recipeName || recipeName === '(레시피 명을 입력해 주세요)') {
+                alert('레시피 이름을 입력해 주세요.');
+                return;
+            }
+
+            const ingredients = [];
+            let hasEmptyFields = false;
+
+            for (let i = 0; i < ingredientIndex; i++) {
+                const ingredient = document.getElementById(`ingredient-${i}`);
+                if (ingredient) {
+                    const name = document.getElementById(`ingredient-name-${i}`).value;
+                    const weight = document.getElementById(`ingredient-weight-${i}`).value;
+                    const cost = document.getElementById(`ingredient-cost-${i}`).value;
+                    if (!name || !weight || !cost) {
+                        hasEmptyFields = true;
+                    } else {
+                        ingredients.push({
+                            name,
+                            weight: parseFloat(weight),
+                            cost: parseFloat(cost)
+                        });
+                    }
+                }
+            }
+
+            if (hasEmptyFields) {
+                alert('모든 재료 항목을 입력해 주세요.');
+                return;
+            }
+
+            if (ingredients.length === 0) {
+                alert('재료를 입력해 주세요.');
+                return;
+            }
+
+            const { totalCostPerGram, costPer100Gram } = calculateTotalCostPerGram();
+            savedRecipes.push({ name: recipeName, ingredients, totalCostPerGram, costPer100Gram });
+            displaySavedRecipes();
+        }
+
+        function displaySavedRecipes() {
+            const container = document.getElementById('saved-recipes-container');
+            container.innerHTML = '';
+            savedRecipes.forEach((recipe, index) => {
+                const recipeDiv = document.createElement('div');
+                recipeDiv.classList.add('saved-recipe');
+                recipeDiv.setAttribute('onclick', `loadRecipe(${index})`);
+
+                const recipeNameDiv = document.createElement('div');
+                recipeNameDiv.classList.add('recipe-name');
+                recipeNameDiv.textContent = recipe.name;
+                recipeDiv.appendChild(recipeNameDiv);
+
+                const costInfoDiv = document.createElement('div');
+                costInfoDiv.classList.add('cost-info');
+                costInfoDiv.innerHTML = `
+                    <div>g당 단가: ${recipe.totalCostPerGram}원</div>
+                    <div>100g당 단가: ${recipe.costPer100Gram}원</div>
+                `;
+                recipeDiv.appendChild(costInfoDiv);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-recipe');
+                deleteButton.textContent = '삭제';
+                deleteButton.setAttribute('onclick', `deleteRecipe(event, ${index})`);
+                recipeDiv.appendChild(deleteButton);
+
+                container.appendChild(recipeDiv);
+            });
+        }
+
+        function loadRecipe(index) {
+            const recipe = savedRecipes[index];
+            if (!recipe) return;
+
+            document.getElementById('recipe-name-display').textContent = recipe.name;
+            document.getElementById('recipe-name-input').value = recipe.name;
+
+            const container = document.getElementById('ingredients-container');
+            container.innerHTML = '';
+
+            recipe.ingredients.forEach((ingredient, idx) => {
+                const newIngredient = document.createElement('div');
+                newIngredient.classList.add('ingredient');
+                newIngredient.setAttribute('id', `ingredient-${idx}`);
+
+                const nameLabel = document.createElement('label');
+                nameLabel.setAttribute('for', `ingredient-name-${idx}`);
+                nameLabel.textContent = '재료 이름 :';
+                newIngredient.appendChild(nameLabel);
+
+                const nameInput = document.createElement('input');
+                nameInput.setAttribute('type', 'text');
+                nameInput.setAttribute('id', `ingredient-name-${idx}`);
+                nameInput.value = ingredient.name;
+                newIngredient.appendChild(nameInput);
+
+                const weightLabel = document.createElement('label');
+                weightLabel.setAttribute('for', `ingredient-weight-${idx}`);
+                weightLabel.textContent = '중량(g) :';
+                newIngredient.appendChild(weightLabel);
+
+                const weightInput = document.createElement('input');
+                weightInput.setAttribute('type', 'number');
+                weightInput.setAttribute('id', `ingredient-weight-${idx}`);
+                weightInput.setAttribute('oninput', `calculateCostPerGram(${idx})`);
+                weightInput.value = ingredient.weight;
+                newIngredient.appendChild(weightInput);
+
+                const costLabel = document.createElement('label');
+                costLabel.setAttribute('for', `ingredient-cost-${idx}`);
+                costLabel.textContent = '금액(원) :';
+                newIngredient.appendChild(costLabel);
+
+                const costInput = document.createElement('input');
+                costInput.setAttribute('type', 'number');
+                costInput.setAttribute('id', `ingredient-cost-${idx}`);
+                costInput.setAttribute('oninput', `calculateCostPerGram(${idx})`);
+                costInput.value = ingredient.cost;
+                newIngredient.appendChild(costInput);
+
+                const costPerGramSpan = document.createElement('span');
+                costPerGramSpan.classList.add('cost-per-gram');
+                costPerGramSpan.setAttribute('id', `cost-per-gram-${idx}`);
+                const costPerGram = (ingredient.weight && ingredient.cost) ? (ingredient.cost / ingredient.weight).toFixed(2) : 0;
+                costPerGramSpan.textContent = `g당 금액 : ${costPerGram}원`;
+                newIngredient.appendChild(costPerGramSpan);
+
+                const removeButton = document.createElement('button');
+                removeButton.classList.add('remove-ingredient');
+                removeButton.textContent = '재료 빼기';
+                removeButton.setAttribute('onclick', `removeIngredient(${idx})`);
+                newIngredient.appendChild(removeButton);
+
+                container.appendChild(newIngredient);
+            });
+
+            ingredientIndex = recipe.ingredients.length;
+            calculateTotalCostPerGram();
+        }
+
+        function deleteRecipe(event, index) {
+            event.stopPropagation();
+            savedRecipes.splice(index, 1);
+            displaySavedRecipes();
+        }
+
+        document.getElementById('add-ingredient').addEventListener('click', () => {
+            const container = document.getElementById('ingredients-container');
+
+            const newIngredient = document.createElement('div');
+            newIngredient.classList.add('ingredient');
+            newIngredient.setAttribute('id', `ingredient-${ingredientIndex}`);
+
+            const nameLabel = document.createElement('label');
+            nameLabel.setAttribute('for', `ingredient-name-${ingredientIndex}`);
+            nameLabel.textContent = '재료 이름 :';
+            newIngredient.appendChild(nameLabel);
+
+            const nameInput = document.createElement('input');
+            nameInput.setAttribute('type', 'text');
+            nameInput.setAttribute('id', `ingredient-name-${ingredientIndex}`);
+            newIngredient.appendChild(nameInput);
+
+            const weightLabel = document.createElement('label');
+            weightLabel.setAttribute('for', `ingredient-weight-${ingredientIndex}`);
+            weightLabel.textContent = '중량(g) :';
+            newIngredient.appendChild(weightLabel);
+
+            const weightInput = document.createElement('input');
+            weightInput.setAttribute('type', 'number');
+            weightInput.setAttribute('id', `ingredient-weight-${ingredientIndex}`);
+            weightInput.setAttribute('oninput', `calculateCostPerGram(${ingredientIndex})`);
+            newIngredient.appendChild(weightInput);
+
+            const costLabel = document.createElement('label');
+            costLabel.setAttribute('for', `ingredient-cost-${ingredientIndex}`);
+            costLabel.textContent = '금액(원) :';
+            newIngredient.appendChild(costLabel);
+
+            const costInput = document.createElement('input');
+            costInput.setAttribute('type', 'number');
+            costInput.setAttribute('id', `ingredient-cost-${ingredientIndex}`);
+            costInput.setAttribute('oninput', `calculateCostPerGram(${ingredientIndex})`);
+            newIngredient.appendChild(costInput);
+
+            const costPerGramSpan = document.createElement('span');
+            costPerGramSpan.classList.add('cost-per-gram');
+            costPerGramSpan.setAttribute('id', `cost-per-gram-${ingredientIndex}`);
+            costPerGramSpan.textContent = `g당 금액 : 0원`;
+            newIngredient.appendChild(costPerGramSpan);
+
+            const removeButton = document.createElement('button');
+            removeButton.classList.add('remove-ingredient');
+            removeButton.textContent = '재료 빼기';
+            removeButton.setAttribute('onclick', `removeIngredient(${ingredientIndex})`);
+            newIngredient.appendChild(removeButton);
+
+            container.appendChild(newIngredient);
+            ingredientIndex++;
+        });
+
+        document.getElementById('save-recipe').addEventListener('click', saveRecipe);
+
+        function openLoginBox() {
+            document.getElementById('login-box').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeLoginBox() {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function login() {
+            const id = document.getElementById('login-id').value;
+            const pw = document.getElementById('login-pw').value;
+            if (id && pw) {
+                alert(`ID: ${id}\nPW: ${pw}`);
+                closeLoginBox();
+            } else {
+                alert('ID와 PW를 입력해 주세요.');
+            }
+        }
+    </script>
+</body>
+</html>
