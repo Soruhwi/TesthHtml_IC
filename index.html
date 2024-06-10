@@ -196,6 +196,15 @@
         .login-box button:hover {
             background-color: #45a049;
         }
+        .login-box .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
         .overlay {
             display: none;
             position: fixed;
@@ -270,9 +279,9 @@
                 <label for="ingredient-name-0">재료 이름 :</label>
                 <input type="text" id="ingredient-name-0">
                 <label for="ingredient-weight-0">중량(g) :</label>
-                <input type="number" id="ingredient-weight-0" oninput="calculateCostPerGram(0)">
+                <input type="text" id="ingredient-weight-0" oninput="validateAndFormatNumber(event, 0)">
                 <label for="ingredient-cost-0">금액(원) :</label>
-                <input type="number" id="ingredient-cost-0" oninput="calculateCostPerGram(0)">
+                <input type="text" id="ingredient-cost-0" oninput="validateAndFormatNumber(event, 0)">
                 <span class="cost-per-gram" id="cost-per-gram-0">g당 금액 : 0원</span>
                 <button class="remove-ingredient" onclick="removeIngredient(0)">재료 빼기</button>
             </div>
@@ -280,9 +289,9 @@
                 <label for="ingredient-name-1">재료 이름 :</label>
                 <input type="text" id="ingredient-name-1">
                 <label for="ingredient-weight-1">중량(g) :</label>
-                <input type="number" id="ingredient-weight-1" oninput="calculateCostPerGram(1)">
+                <input type="text" id="ingredient-weight-1" oninput="validateAndFormatNumber(event, 1)">
                 <label for="ingredient-cost-1">금액(원) :</label>
-                <input type="number" id="ingredient-cost-1" oninput="calculateCostPerGram(1)">
+                <input type="text" id="ingredient-cost-1" oninput="validateAndFormatNumber(event, 1)">
                 <span class="cost-per-gram" id="cost-per-gram-1">g당 금액 : 0원</span>
                 <button class="remove-ingredient" onclick="removeIngredient(1)">재료 빼기</button>
             </div>
@@ -290,9 +299,9 @@
                 <label for="ingredient-name-2">재료 이름 :</label>
                 <input type="text" id="ingredient-name-2">
                 <label for="ingredient-weight-2">중량(g) :</label>
-                <input type="number" id="ingredient-weight-2" oninput="calculateCostPerGram(2)">
+                <input type="text" id="ingredient-weight-2" oninput="validateAndFormatNumber(event, 2)">
                 <label for="ingredient-cost-2">금액(원) :</label>
-                <input type="number" id="ingredient-cost-2" oninput="calculateCostPerGram(2)">
+                <input type="text" id="ingredient-cost-2" oninput="validateAndFormatNumber(event, 2)">
                 <span class="cost-per-gram" id="cost-per-gram-2">g당 금액 : 0원</span>
                 <button class="remove-ingredient" onclick="removeIngredient(2)">재료 빼기</button>
             </div>
@@ -314,6 +323,7 @@
     <div class="overlay" id="overlay" onclick="closeLoginBox()"></div>
 
     <div class="login-box" id="login-box">
+        <button class="close-btn" onclick="closeLoginBox()">×</button>
         <h2>로그인</h2>
         <input type="text" placeholder="ID" id="login-id">
         <input type="password" placeholder="PW" id="login-pw">
@@ -324,9 +334,21 @@
         let ingredientIndex = 3;
         const savedRecipes = [];
 
+        function validateAndFormatNumber(event, index) {
+            const input = event.target;
+            let value = input.value.replace(/[^0-9]/g, '');
+
+            // 천 단위 콤마 추가
+            if (value) {
+                value = parseInt(value).toLocaleString();
+            }
+            input.value = value;
+            calculateCostPerGram(index);
+        }
+
         function calculateCostPerGram(index) {
-            const weight = parseFloat(document.getElementById(`ingredient-weight-${index}`).value) || 0;
-            const cost = parseFloat(document.getElementById(`ingredient-cost-${index}`).value) || 0;
+            const weight = parseFloat(document.getElementById(`ingredient-weight-${index}`).value.replace(/,/g, '')) || 0;
+            const cost = parseFloat(document.getElementById(`ingredient-cost-${index}`).value.replace(/,/g, '')) || 0;
             const costPerGram = (weight && cost) ? (cost / weight).toFixed(2) : 0;
             document.getElementById(`cost-per-gram-${index}`).textContent = `g당 금액 : ${costPerGram}원`;
             calculateTotalCostPerGram();
@@ -339,8 +361,8 @@
             for (let i = 0; i < ingredientIndex; i++) {
                 const ingredient = document.getElementById(`ingredient-${i}`);
                 if (ingredient) {
-                    const weight = parseFloat(document.getElementById(`ingredient-weight-${i}`).value) || 0;
-                    const cost = parseFloat(document.getElementById(`ingredient-cost-${i}`).value) || 0;
+                    const weight = parseFloat(document.getElementById(`ingredient-weight-${i}`).value.replace(/,/g, '')) || 0;
+                    const cost = parseFloat(document.getElementById(`ingredient-cost-${i}`).value.replace(/,/g, '')) || 0;
                     totalWeight += weight;
                     totalCost += cost;
                 }
@@ -350,7 +372,7 @@
             const costPer100Gram = (totalCostPerGram * 100).toFixed(2);
             document.getElementById('total-cost').innerHTML = `
                 <div class="cost-summary-container">
-                    <span>전체 중량 : ${totalWeight}g당 단가 : ${totalCostPerGram}원</span>
+                    <span>전체 중량 : ${totalWeight.toLocaleString()}g당 단가 : ${totalCostPerGram}원</span>
                     <span class="cost-summary">100g당 단가: ${costPer100Gram}원</span>
                 </div>
             `;
@@ -409,8 +431,8 @@
                 const ingredient = document.getElementById(`ingredient-${i}`);
                 if (ingredient) {
                     const name = document.getElementById(`ingredient-name-${i}`).value;
-                    const weight = document.getElementById(`ingredient-weight-${i}`).value;
-                    const cost = document.getElementById(`ingredient-cost-${i}`).value;
+                    const weight = document.getElementById(`ingredient-weight-${i}`).value.replace(/,/g, '');
+                    const cost = document.getElementById(`ingredient-cost-${i}`).value.replace(/,/g, '');
                     if (!name || !weight || !cost) {
                         hasEmptyFields = true;
                     } else {
@@ -501,10 +523,10 @@
                 newIngredient.appendChild(weightLabel);
 
                 const weightInput = document.createElement('input');
-                weightInput.setAttribute('type', 'number');
+                weightInput.setAttribute('type', 'text');
                 weightInput.setAttribute('id', `ingredient-weight-${idx}`);
-                weightInput.setAttribute('oninput', `calculateCostPerGram(${idx})`);
-                weightInput.value = ingredient.weight;
+                weightInput.setAttribute('oninput', `validateAndFormatNumber(event, ${idx})`);
+                weightInput.value = ingredient.weight.toLocaleString();
                 newIngredient.appendChild(weightInput);
 
                 const costLabel = document.createElement('label');
@@ -513,10 +535,10 @@
                 newIngredient.appendChild(costLabel);
 
                 const costInput = document.createElement('input');
-                costInput.setAttribute('type', 'number');
+                costInput.setAttribute('type', 'text');
                 costInput.setAttribute('id', `ingredient-cost-${idx}`);
-                costInput.setAttribute('oninput', `calculateCostPerGram(${idx})`);
-                costInput.value = ingredient.cost;
+                costInput.setAttribute('oninput', `validateAndFormatNumber(event, ${idx})`);
+                costInput.value = ingredient.cost.toLocaleString();
                 newIngredient.appendChild(costInput);
 
                 const costPerGramSpan = document.createElement('span');
@@ -568,9 +590,9 @@
             newIngredient.appendChild(weightLabel);
 
             const weightInput = document.createElement('input');
-            weightInput.setAttribute('type', 'number');
+            weightInput.setAttribute('type', 'text');
             weightInput.setAttribute('id', `ingredient-weight-${ingredientIndex}`);
-            weightInput.setAttribute('oninput', `calculateCostPerGram(${ingredientIndex})`);
+            weightInput.setAttribute('oninput', `validateAndFormatNumber(event, ${ingredientIndex})`);
             newIngredient.appendChild(weightInput);
 
             const costLabel = document.createElement('label');
@@ -579,9 +601,9 @@
             newIngredient.appendChild(costLabel);
 
             const costInput = document.createElement('input');
-            costInput.setAttribute('type', 'number');
+            costInput.setAttribute('type', 'text');
             costInput.setAttribute('id', `ingredient-cost-${ingredientIndex}`);
-            costInput.setAttribute('oninput', `calculateCostPerGram(${ingredientIndex})`);
+            costInput.setAttribute('oninput', `validateAndFormatNumber(event, ${ingredientIndex})`);
             newIngredient.appendChild(costInput);
 
             const costPerGramSpan = document.createElement('span');
